@@ -1,0 +1,27 @@
+project:
+  # PROJECT in Seiler's parameters.py selects the active study area.
+  parameters: ../../external/seiler/scripts/parameters.py
+  pandapower_net_filename: null
+
+case:
+  # This file is the stand-alone status-quo default. The wrapper
+  # run_benchmark_scenario_with_bess.py overwrites this with the scenario id.
+  scenario_id: status_quo
+  realisations: 1
+
+paths:
+  # Repository-wide scenario output root.
+  output_root: ../../outputs
+
+  # Relative to outputs/<PROJECT>/<scenario>/allocation/.
+  pv_allocation_filename: pv_status_quo_allocation.parquet
+
+allocation:
+  # Austrian status-quo proxy: approximately 40% of surveyed PV households
+  # report an electricity storage system. This is not an observed municipal
+  # stock ratio and is kept explicit as a scenario parameter.
+  attachment_rate: 0.40
+
+  # Reproducible municipality-/scenario-/realisation-specific RNG seeds are
+  # derived from this value.
+  base_seed: 42

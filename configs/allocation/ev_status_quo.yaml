@@ -1,0 +1,62 @@
+project:
+  parameters: ../../external/seiler/scripts/parameters.py
+  pandapower_net_filename: null
+
+case:
+  scenario_id: ev_status_quo
+  penetration_factor: 1.0
+
+paths:
+  municipality_boundaries: ../../data/raw/gkz_polygon/STATISTIK_AUSTRIA_GEM_20260101.shp
+
+  # Canonical harmonised EV output. The EV harmonisation workbook contains
+  # the municipality-level BEV stock on sheet ev_by_municipality.
+  harmonised_ev: ../../harmonisation/harmonisation_EV/outputs/ev_municipality_harmonised.xlsx
+  harmonised_ev_sheet: ev_by_municipality
+
+  # Reuses the municipality-wide OSM cache already created for PV allocation.
+  municipality_building_cache: ../../data/interim/municipality_buildings
+
+  allocation_output_root: ../../outputs
+
+columns:
+  municipality_id: g_id
+  municipality_name: g_name
+  municipality_encoding: utf-8
+
+  ev_municipality_id: municipality_id
+  ev_unit_count: unit_count
+  ev_passenger_car_count: passenger_car_count
+
+  grid_building_id: id
+  grid_area: area
+  grid_residential: residential
+  bus_node_id: node_id
+
+spatial:
+  working_crs: null
+  aoi_crs_if_missing: EPSG:4326
+  municipality_crs_if_missing: null
+  building_crs_if_missing: null
+
+allocation:
+  # Status-quo BEVs are assigned to residential building connections as a
+  # synthetic home-location proxy. This does not imply an observed wallbox.
+  eligibility_mode: residential_only
+
+  # null means: use FOOTPRINT_AREA_THRESHHOLD from parameters.py.
+  minimum_footprint_area_m2: null
+
+  # Baseline: sample buildings in proportion to their existing base load.
+  # Alternative: uniform.
+  sampling_weight: base_load
+
+  base_seed: 42
+  realisations: 1
+
+plotting:
+  enabled: true
+  basemap: true
+  dpi: 600
+  figsize: [12, 12]
+  output_subdir: ev_status_quo

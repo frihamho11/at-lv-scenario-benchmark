@@ -1,0 +1,64 @@
+project:
+  # PROJECT and grid paths are resolved from Seiler's parameters.py.
+  parameters: ../../external/seiler/scripts/parameters.py
+
+  # Always start from the immutable synthetic base grid.
+  pandapower_net_filename: net.p
+
+case:
+  scenario_id: status_quo
+  realisation: 0
+
+paths:
+  allocation_output_root: ../../outputs
+  allocation_filename: ev_status_quo_allocation.parquet
+  integration_output_root: ../../outputs
+
+integration:
+  # Written next to net.p. net.p itself is never overwritten.
+  output_net_filename: net_status_quo_ev.p
+  in_service: true
+  check_building_bus_match: true
+
+
+simbench:
+  # Scenario 0 does not contain individual EV charging loads. Scenario 2 is
+  # used as the default source of individual EV charging templates; only the
+  # time profiles and their SimBench load parameters are reused, not the
+  # SimBench EV penetration level.
+  scenario: 2
+
+  # Seiler's base grid synthesis is intended for rural LV grids. Restrict the
+  # template pool accordingly.
+  source_grid_codes:
+    - 1-LV-rural1--2-sw
+    - 1-LV-rural2--2-sw
+    - 1-LV-rural3--2-sw
+
+  # The spatial EV allocation uses the residential building as home-location
+  # proxy. Therefore only SimBench household charging profiles are eligible.
+  # Current SimBench profile IDs use HLS_ for household charging and APLS_ for
+  # workplace charging. APLS_ profiles are deliberately excluded.
+  ev_profile_prefixes:
+    - HLS_
+  expected_ev_profile_count: 6
+
+  # Reproducible sampling with replacement. Multiple allocated EVs at the same
+  # building remain separate loads and are sampled independently.
+  random_seed: 20260813
+
+  # Neutral default: each of the six household charging profile IDs is equally
+  # likely. Alternative: reference_rows, which samples according to the number
+  # of matching EV rows in the configured SimBench reference grids.
+  profile_weighting: uniform
+
+  # Keep SimBench reactive-power behaviour. Set false for q_mvar = 0 EV loads.
+  use_reactive_power: false
+
+time_alignment:
+  # SimBench EV profiles originate from 2016. Map every target day in the
+  # benchmark year to the nearest SimBench day with the same weekday while
+  # preserving the 15-minute time of day.
+  reference_year: 2025
+  method: nearest_same_weekday
+  time_step_minutes: 15

@@ -1,0 +1,10 @@
+case:
+  scenario_id: 2x_penetration
+  realisations: 1
+
+# Multipliers relative to the harmonised municipality-level status-quo stock.
+# 1.0 = status quo, 1.5 = +50 %, 2.0 = double the status-quo stock.
+penetration_factors:
+  pv: 2.0
+  ev: 2.0
+  hp: 2.0

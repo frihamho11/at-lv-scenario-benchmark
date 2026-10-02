@@ -1,0 +1,42 @@
+project:
+  parameters: ../../external/seiler/scripts/parameters.py
+  pandapower_net_filename: net.p
+
+case:
+  scenario_id: status_quo
+  realisation: 0
+
+technologies:
+  pv:
+    enabled: true
+    config: pv_pandapower.yaml
+
+  ev:
+    enabled: true
+    config: ev_pandapower.yaml
+
+  hp:
+    enabled: true
+    config: hp_pandapower.yaml
+
+integration:
+  output_net_filename: net_status_quo_combined.p
+
+  # Intermediate PV / EV stage networks are removed after successful
+  # integration. Technology-specific diagnostic files are retained.
+  cleanup_intermediate_files: true
+
+spatial:
+  # null -> use CRS_XY from Seiler's parameters.py.
+  working_crs: null
+  aoi_crs_if_missing: EPSG:4326
+  building_crs_if_missing: null
+
+paths:
+  output_root: ../../outputs
+
+plotting:
+  enabled: true
+  basemap: true
+  dpi: 600
+  figsize: [12, 12]

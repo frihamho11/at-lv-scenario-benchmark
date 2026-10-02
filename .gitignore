@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Data files - do not publish raw datasets unless license is checked
+data/raw/*/**
+!data/raw/**/.gitkeep
+data/interim/
+data/processed/
+results/
+*.csv
+*.xlsx
+*.xls
+*.gpkg
+*.shp
+*.dbf
+*.shx
+*.prj
+*.tif
+*.zip
+*.parquet
+
+# Results
+results/
+
+# debug tests
+debug_tests/
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Generated runtime and benchmark outputs
+outputs/*
+!outputs/README.md

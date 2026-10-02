@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite the associated thesis."
+authors:
+  - family-names: Seiler
+    given-names: Roman
+    doi: "https://doi.org/10.34726/hss.2025.129705"
+title: "lv-syn-grid"
+type: software
+license: MIT
+version: 0.1.0
+date-released: 2026-02-07
+url: "https://github.com/lemonraiser/lv-syn-grid"

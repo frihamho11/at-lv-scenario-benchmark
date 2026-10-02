@@ -1,0 +1,51 @@
+project:
+  # PROJECT and grid paths are resolved from Seiler's parameters.py.
+  parameters: ../../external/seiler/scripts/parameters.py
+
+  # Always start from the immutable synthetic base grid.
+  pandapower_net_filename: net.p
+
+case:
+  scenario_id: status_quo
+  realisation: 0
+
+paths:
+  allocation_output_root: ../../outputs
+  allocation_filename: pv_status_quo_allocation.parquet
+  integration_output_root: ../../outputs
+
+integration:
+  # Written next to net.p. net.p itself is never overwritten.
+  output_net_filename: net_status_quo_pv.p
+  in_service: true
+  check_building_bus_match: true
+
+  # Default PV size adopted from Seiler's Austrian LV-grid modelling.
+  nominal_power_kwp: 12.0
+
+  # No reactive-power behaviour is modelled in the first PV benchmark version.
+  q_mvar: 0.0
+
+profile:
+  source: APCS
+  file: ../../data/raw/APCS_synthload_2025.csv
+
+  # APCS E1 = Photovoltaik.
+  type_number: 15
+  profile_id: APCS_E1_2025
+
+  # # Use APCS E1 only as the temporal shape. The original annual-energy
+  # # normalization is deliberately discarded in this first benchmark version.
+  # normalization: peak
+  # time_step_minutes: 15
+    # APCS E1 provides the temporal PV generation shape.
+  # The profile is scaled to the assumed specific annual PV yield.
+  normalization: annual_yield
+  specific_yield_kwh_per_kwp: 1000.0
+  time_step_minutes: 15
+
+time_alignment:
+  # APCS E1 already uses the benchmark reference year. Validate that the full
+  # 15-minute profile exactly covers 2025; do not shift it.
+  reference_year: 2025
+  method: annual_sequence

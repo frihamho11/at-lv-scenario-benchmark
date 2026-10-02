@@ -1,0 +1,39 @@
+cff-version: 1.2.0
+
+message: "If you use this software, please cite this repository and the associated master's thesis."
+
+title: "Austrian LV Scenario Benchmark Framework"
+
+type: software
+
+authors:
+
+* family-names: "Hahn"
+  given-names: "Friedrich"
+
+license: MIT
+
+keywords:
+
+* low-voltage distribution grids
+* synthetic grids
+* open data
+* photovoltaic
+* electric vehicles
+* heat pumps
+* battery energy storage systems
+* pandapower
+* power flow
+* Austria
+* scenario generation
+* benchmark
+
+preferred-citation:
+type: thesis
+title: "Open-Data-Based Scenario and Benchmark Framework for Regional PV, EV, HP and BESS Penetration in Synthetic Austrian Low-Voltage Grids"
+authors:
+- family-names: "Hahn"
+given-names: "Friedrich"
+year: 2026
+institution:
+name: "TU Wien"

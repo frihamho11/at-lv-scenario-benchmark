@@ -1,0 +1,79 @@
+project:
+  # PROJECT in this file selects the study area and the grid folder.
+  parameters: ../../external/seiler/scripts/parameters.py
+
+  # Leave null when lvgrid/net.p exists or exactly one *.p file is present.
+  # Otherwise enter the actual pickle filename, for example grid_status_quo.p.
+  pandapower_net_filename: null
+
+case:
+  scenario_id: pv_status_quo
+  penetration_factor: 1.0
+
+paths:
+  # Your Statistik Austria municipality shapefile location relative to this YAML.
+  municipality_boundaries: ../../data/raw/gkz_polygon/STATISTIK_AUSTRIA_GEM_20260101.shp
+
+  # Directory or exact file. When a directory is used, exactly one table must
+  # contain municipality_id and unit_count.
+  harmonised_pv: ../../harmonisation/harmonisation_PV/outputs
+  harmonised_pv_sheet: null
+
+  # Generated municipality-wide OSM building stocks.
+  municipality_building_cache: ../../data/interim/municipality_buildings
+
+  # OSMnx request cache used only while municipality files are generated.
+  osmnx_cache: ../../data/cache/osmnx
+
+  # Tabular allocation results are stored below this root in <PROJECT>/.
+  allocation_output_root: ../../outputs
+
+columns:
+  # Statistik Austria shapefile columns.
+  municipality_id: g_id
+  municipality_name: g_name
+  municipality_encoding: utf-8
+
+  # Harmonised PV output columns.
+  pv_municipality_id: municipality_id
+  pv_unit_count: unit_count
+
+  # Existing buildings.parquet and pandapower bus columns.
+  grid_building_id: id
+  grid_area: area
+  grid_residential: residential
+  bus_node_id: node_id
+
+spatial:
+  # null means: use CRS_XY from parameters.py.
+  working_crs: null
+  aoi_crs_if_missing: EPSG:4326
+  municipality_crs_if_missing: null
+  building_crs_if_missing: null
+
+allocation:
+  # Matches the intended share of residential houses/buildings.
+  eligibility_mode: residential_only
+
+  # null means: use FOOTPRINT_AREA_THRESHHOLD from parameters.py.
+  minimum_footprint_area_m2: null
+
+  # Baseline: equal chance for each eligible grid building.
+  # Sensitivity alternative: footprint_area.
+  sampling_weight: uniform
+
+  base_seed: 42
+
+  # 1 = one reproducible stochastic allocation.
+  # >1 = multiple alternative spatial realisations.
+  realisations: 1
+
+plotting:
+  enabled: true
+  basemap: true
+  municipality_boundaries: true
+  dpi: 600
+  figsize: [12, 12]
+
+  # Maps are written to grids/<PROJECT>/plots/<output_subdir>/.
+  output_subdir: pv_status_quo

@@ -1,0 +1,64 @@
+project:
+  # PROJECT and grid paths are resolved from Seiler's parameters.py.
+  parameters: ../../external/seiler/scripts/parameters.py
+
+  # Always start from the immutable synthetic base grid.
+  pandapower_net_filename: net.p
+
+case:
+  scenario_id: status_quo
+  realisation: 0
+
+paths:
+  allocation_output_root: ../../outputs
+  allocation_filename: hp_status_quo_allocation.parquet
+  integration_output_root: ../../outputs
+
+integration:
+  # Written next to net.p. net.p itself is never overwritten.
+  output_net_filename: net_status_quo_hp.p
+  in_service: true
+  check_building_bus_match: true
+
+simbench:
+  # Scenario 0 contains no individual HPs in the SimBench reference dataset.
+  # Scenario 2 is therefore used as the default source of individual HP
+  # templates; only the HP operating profiles and their SimBench maximum
+  # powers are reused, not the SimBench penetration level.
+  scenario: 2
+
+  # The thesis uses Seiler's rural LV synthesis as its grid basis. Therefore
+  # the default HP template pool is restricted to SimBench's three rural LV
+  # grid classes rather than mixing rural, semi-urban and urban HPs.
+  source_grid_codes:
+    - 1-LV-rural1--2-sw
+    - 1-LV-rural2--2-sw
+    - 1-LV-rural3--2-sw
+
+  # SimBench names the eight HP profiles by heat source / operating mode.
+  hp_profile_prefixes:
+    - Air_
+    - Soil_
+  expected_hp_profile_count: 8
+
+  # Sampling is performed with replacement from complete SimBench HP load
+  # records (profile + maximum p_mw + maximum q_mvar). A fixed seed makes the
+  # result deterministic for a given sorted allocation table.
+  random_seed: 20260813
+
+  # Transparent neutral default: all eight HP profile types are equally likely.
+  # After choosing the profile type, one complete SimBench reference load with
+  # that profile is sampled to obtain its associated p_mw/q_mvar parameters.
+  profile_weighting: uniform
+
+  # SimBench provides normalized p and q profiles. Keep both by default.
+  # Set false to keep q_mvar = 0 for all HPs.
+  use_reactive_power: true
+
+time_alignment:
+  # SimBench HP profiles originate from 2016. Preserve seasonal position by
+  # mapping month/day/time-of-day to the benchmark reference year. 29 February
+  # is therefore omitted automatically for the non-leap reference year 2025.
+  reference_year: 2025
+  method: month_day
+  time_step_minutes: 15

@@ -1,0 +1,43 @@
+name: at-lv-scenario-benchmark
+
+channels:
+  - conda-forge
+
+dependencies:
+  - python=3.10.16
+
+  # Core data processing
+  - numpy=1.26.4
+  - pandas=2.3.3
+  - scipy=1.13.1
+
+  # Geospatial processing
+  - geopandas=1.0.1
+  - shapely=2.0.6
+  - osmnx=1.8.0
+  - networkx=3.4.2
+  - pyproj=3.6.1
+
+  # Scientific / modelling utilities
+  - scikit-learn=1.6.1
+  - scikit-image=0.25.0
+
+  # Plotting
+  - matplotlib=3.10.0
+  - contextily=1.7.1
+
+  # File formats
+  - pyarrow=16.1.0
+  - openpyxl=3.1.5
+  - odfpy
+  - pyyaml
+
+  # Notebooks and tests
+  - jupyterlab
+  - pytest
+
+  # Packages installed via pip in the working environment
+  - pip
+  - pip:
+      - pandapower==3.5.4
+      - simbench==1.6.2
