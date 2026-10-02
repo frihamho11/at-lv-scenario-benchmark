@@ -240,13 +240,26 @@ data/
 └── processed/
 ```
 
-Some source files may not be redistributed with the repository because redistribution conditions differ between data providers. In that case, obtain the original data from the respective publisher and store them under the filenames expected by the configuration files and harmonisation notebooks.
+Some source files are intentionally not redistributed with this repository because redistribution conditions differ between data providers. Obtain these files from the original publisher and store them under the filenames expected by the configuration files and harmonisation notebooks. Always check the current licence and terms of use of the respective data provider.
 
 The individual harmonisation directories contain additional documentation for their respective source data.
 
+## 5.0 Data Acquisition Overview
+
+| Input | Provider / source | How it is obtained | Local use in this repository |
+| --- | --- | --- | --- |
+| Austrian municipality boundaries and municipality codes (GKZ) | Statistik Austria, *Gliederung Österreichs in Gemeinden* | Download the municipality boundary dataset for the required territorial status as SHAPE-ZIP / WFS | `data/raw/gkz_polygon/` |
+| Building footprints and road network | OpenStreetMap | Retrieved automatically by the adapted Seiler workflow via OSMnx / OpenStreetMap services | No permanent manual raw download required for the standard workflow |
+| Building-height information | BEV, *Digitales Landschaftsmodell – Bauwerke* (`DLM_8000_BAUWERK`) | Download the free Austria-wide GeoPackage from the BEV Geoportal | `data/raw/bev/` |
+| Austrian standardised load profiles / generation profiles | APCS Power Clearing and Settlement AG, *Synthetische Lastprofile* | Download the APCS load-profile archive for the benchmark year; this release uses 2025 | `data/raw/APCS_synthload_2025.csv` after extraction/preparation |
+| EV and heat-pump reference profiles | SimBench | Installed with the pinned Python package; no separate manual profile download is required | Accessed through the `simbench` Python package |
+| AOI polygon | User-defined input | Create from the desired study-area coordinates | `data/raw/aoi/<PROJECT>/polygon_coordinates.csv` |
+
+The sections below provide the exact source pages and release-specific instructions.
+
 ---
 
-## 5.1 Municipality Boundaries
+## 5.1 Municipality Boundaries and GKZ
 
 Municipality polygons are expected under:
 
@@ -254,7 +267,7 @@ Municipality polygons are expected under:
 data/raw/gkz_polygon/
 ```
 
-The current configuration uses the Statistik Austria municipality boundaries with territorial status 2026:
+The current configuration uses the official **Statistik Austria** municipality boundary dataset with territorial status **1 January 2026**:
 
 ```text
 STATISTIK_AUSTRIA_GEM_20260101.shp
@@ -263,7 +276,25 @@ STATISTIK_AUSTRIA_GEM_20260101.prj
 STATISTIK_AUSTRIA_GEM_20260101.shx
 ```
 
-The associated shapefile components must remain together in the same directory.
+Official source and metadata:
+
+<https://data.statistik.gv.at/web/meta.jsp?dataset=OGDEXT_GEM_1>
+
+Direct 2026 SHAPE-ZIP download:
+
+<https://www.statistik.gv.at/gs-open/GEODATA/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=GEODATA:STATISTIK_AUSTRIA_GEM_20260101&outputFormat=SHAPE-ZIP&format_options=CHARSET:UTF-8>
+
+The dataset contains the municipality geometry together with the municipality identifier (`ID`, i.e. the municipality code / GKZ) and municipality name. Statistik Austria provides the data in **MGI Lambert (EPSG:31287)**.
+
+After downloading, extract the ZIP archive and place all shapefile components in:
+
+```text
+data/raw/gkz_polygon/
+```
+
+The associated `.shp`, `.dbf`, `.prj` and `.shx` files must remain together in the same directory.
+
+If a later territorial status is used, update the expected filename and ensure that all municipality-level input data are harmonised to the same administrative reference.
 
 ---
 
@@ -285,51 +316,126 @@ external/seiler/scripts/parameters.py
 
 The AOI defines the spatial extent used during synthetic grid generation.
 
+Building footprints and the road network inside and around the AOI are retrieved from **OpenStreetMap** by the adapted Seiler workflow. No separate OSM export is required for the standard workflow.
+
+OpenStreetMap:
+
+<https://www.openstreetmap.org/>
+
+OpenStreetMap copyright and licence information:
+
+<https://www.openstreetmap.org/copyright>
+
 ---
 
-## 5.3 Austrian Building-Height Data
+## 5.3 Austrian BEV/DLM Building-Height Data
 
-The modified grid-generation workflow can use the Austrian BEV/DLM building dataset to improve building-height estimates.
+The modified grid-generation workflow can use the official Austrian **BEV Digitales Landschaftsmodell (DLM) – Bauwerke** dataset to improve building-height estimates.
 
-For the provided workflow, the source is expected under:
+Official product page:
+
+<https://www.bev.gv.at/Services/Produkte/Digitales-Landschaftsmodell/Bauwerke.html>
+
+BEV Geoportal / download entry point:
+
+<https://data.bev.gv.at/>
+
+The required product is:
+
+```text
+DLM_8000_BAUWERK
+```
+
+It is provided free of charge as an Austria-wide **GeoPackage (GPKG)**. The relevant building-polygon layer is:
+
+```text
+BWK_8100_BAUWERK_F
+```
+
+The BEV dataset contains several height attributes for the building polygons, which is why it is used as an optional height-information source in the adapted grid-generation workflow.
+
+For the provided workflow, the downloaded GeoPackage is expected under:
 
 ```text
 data/raw/bev/
 ```
 
-For example:
+For example, the release configuration may reference:
 
 ```text
 data/raw/bev/DLM_8000_BAUWERK_20230125.gpkg
 ```
 
+BEV publishes updated versions of the dataset. If a newer GeoPackage is downloaded, keep the original provider file if possible and update the corresponding input path in the project configuration/code instead of silently replacing a release-specific file.
+
 The exact path and layer configuration are defined by the corresponding project code and configuration.
 
 ---
 
-## 5.4 PV Generation Profile
+## 5.4 APCS Synthetic Load Profiles (2025)
 
-PV generation uses the Austrian APCS synthetic load/generation profile.
+Austrian standardised 15-minute load and generation profiles are obtained from **APCS Power Clearing and Settlement AG**.
 
-The current configuration expects:
+Official APCS source page:
+
+<https://www.apcs.at/clearing/technisches-clearing>
+
+On that page, navigate to **Synthetische Lastprofile** and download **Lastprofile 2025**.
+
+Direct archive used for the 2025 release:
+
+<https://www.apcs.at/fileadmin/user_upload/APCS/Clearing/Lastprofile/synthload2025.zip>
+
+The current repository configuration expects the prepared 2025 profile table as:
 
 ```text
 data/raw/APCS_synthload_2025.csv
 ```
 
-The PV integration uses APCS profile type 15 (`E1`, photovoltaic generation) as the temporal generation shape.
+Therefore:
 
-The profile is scaled using the configured specific annual PV yield rather than being peak-normalised.
+1. download the APCS 2025 load-profile archive;
+2. extract the source profile file;
+3. prepare/copy it using the filename expected by this repository:
+   `data/raw/APCS_synthload_2025.csv`.
+
+The APCS archive contains the Austrian standardised profiles used for small-consumer / small-generator representation. In this framework, **profile type 15 (`E1`)** is used as the temporal shape for photovoltaic generation.
+
+The applicable Austrian market rules describe `E1` as the standardised profile for photovoltaic feed-in. The APCS source page also provides the yearly profile archives and links to the corresponding market-rule documentation.
+
+For PV integration, the selected E1 time series is used as a **temporal shape** and is subsequently energy-normalised using the configured specific annual PV yield. It is not peak-normalised.
+
+The same APCS source dataset is also relevant to the adapted Seiler grid-generation workflow where Austrian standard load profiles are required for conventional demand representation.
 
 ---
 
-## 5.5 SimBench Profiles
+## 5.5 SimBench EV and Heat-Pump Profiles
 
-EV and heat-pump demand profiles are taken from the SimBench dataset installed through the Python package.
+EV and heat-pump demand profiles are taken from the **SimBench** benchmark dataset.
 
-No separate SimBench input file needs to be downloaded manually.
+Official SimBench download page:
 
-The framework uses rural LV reference grids as the profile source.
+<https://simbench.de/en/download/>
+
+Python package:
+
+<https://pypi.org/project/simbench/>
+
+Source repository:
+
+<https://github.com/e2nIEE/simbench>
+
+This release pins:
+
+```text
+simbench 1.6.2
+```
+
+through `environment.yaml`.
+
+No separate SimBench profile file needs to be downloaded manually when the environment is created from `environment.yaml`, because the required dataset is distributed with the Python package.
+
+The framework accesses rural LV reference grids and their assigned time series through the `simbench` Python API. EV charging profiles and heat-pump profiles are sampled reproducibly from these reference data.
 
 ---
 
