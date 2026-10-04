@@ -1,0 +1,10 @@
+case:
+  scenario_id: 2x_penetration_nested
+  realisations: 1
+
+# Controlled sensitivity case: higher penetration builds on the same
+# status-quo spatial realisation.
+penetration_factors:
+  pv: 2.0
+  ev: 2.0
+  hp: 2.0

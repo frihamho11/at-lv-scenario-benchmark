@@ -1,0 +1,19 @@
+project:
+  parameters: ../../external/seiler/scripts/parameters.py
+  pandapower_net_filename: null
+
+case:
+  scenario_id: 2x_penetration_nested
+  realisations: 1
+
+baseline:
+  scenario_id: status_quo
+
+paths:
+  output_root: ../../outputs
+  pv_allocation_filename: pv_status_quo_allocation.parquet
+  baseline_bess_allocation_filename: bess_allocation.parquet
+
+allocation:
+  attachment_rate: 0.40
+  base_seed: 42

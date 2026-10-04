@@ -1,0 +1,59 @@
+project:
+  parameters: ../../external/seiler/scripts/parameters.py
+  pandapower_net_filename: null
+
+case:
+  # Stand-alone default; the scenario wrapper overwrites scenario/realisation.
+  scenario_id: 2x_penetration_nested
+  realisation: 0
+
+paths:
+  output_root: ../../outputs
+  allocation_filename: bess_allocation.parquet
+
+network:
+  # BESS is appended after PV, EV and HP, because its dispatch is calculated
+  # from the local residual load of the already combined network.
+  base_net_filename: net_2x_penetration_nested_combined.p
+
+sizing:
+  # Austrian EAG-derived 2024 ratio for simultaneously installed PV-storage:
+  # usable storage capacity per nominal PV power.
+  usable_capacity_ratio_kwh_per_kwp: 1.01
+
+  # Adapted from the 0.25 C residential BESS assumption of Simonic et al.
+  # In the simplified implementation this is explicitly a power-to-USABLE-
+  # energy ratio. At 12 kWp PV: E_use=12.12 kWh and P_max=3.03 kW.
+  power_to_usable_energy_ratio_per_h: 0.25
+
+  # Current PV method uses 12 kWp per represented PV installation. This is
+  # only a fallback when nominal_power_kwp metadata is absent from net.sgen.
+  default_pv_nominal_power_kwp: 12.0
+
+battery:
+  # The market ratio above is already USABLE capacity. The internal energy
+  # state therefore spans the full usable window. SOC 20...100% is a state/
+  # reporting mapping and does not remove another 20% of the market capacity.
+  soc_min: 0.20
+  soc_max: 1.00
+
+  # Conservative initialisation: no usable energy is gifted at 1 Jan 00:00.
+  initial_soc: 0.20
+
+  # Charge/discharge efficiencies from Zou et al. (2022).
+  eta_charge: 0.96
+  eta_discharge: 0.96
+
+electrical:
+  # Baseline active-power-only representation.
+  q_mvar: 0.0
+
+time:
+  # Must match the full-year technology-controller axis.
+  reference_year: 2025
+  time_step_minutes: 15
+
+integration:
+  output_net_filename: net_2x_penetration_nested_combined_bess.p
+  in_service: true
+  check_building_bus_match: true

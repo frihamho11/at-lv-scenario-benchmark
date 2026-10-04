@@ -1,0 +1,26 @@
+project:
+  parameters: ../../external/seiler/scripts/parameters.py
+  pandapower_net_filename: net.p
+
+network:
+  scenario_filename: net_2x_penetration_nested_combined.p
+
+benchmark:
+  id: full_year_no_bess
+  reference_year: 2025
+  time_step_minutes: 15
+
+case:
+  scenario_id: 2x_penetration_nested
+  realisation: 0
+
+analysis:
+  start: "2025-01-01T00:00:00"
+  end: "2025-12-31T23:45:00"
+
+outputs:
+  root: ../../outputs
+  file_type: .csv
+
+solver:
+  continue_on_divergence: false

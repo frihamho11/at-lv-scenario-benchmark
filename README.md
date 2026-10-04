@@ -60,6 +60,8 @@ external/seiler/
 
 The framework does **not** attempt to reconstruct the actual distribution network of a municipality. The resulting networks and technology locations are synthetic benchmark representations intended for reproducible power-system studies.
 
+For penetration studies, the release contains both the original standard scenario workflow and an additional nested workflow. The nested implementation is intended for controlled comparisons in which a higher-penetration case extends the same lower-penetration realisation instead of replacing its existing unit identities and profile assignments.
+
 ---
 
 ## 2. Main Technologies
@@ -95,23 +97,31 @@ at-lv-scenario-benchmark/
 │   │   ├── pv_status_quo.yaml
 │   │   ├── ev_status_quo.yaml
 │   │   ├── hp_status_quo.yaml
-│   │   └── bess_status_quo.yaml
+│   │   ├── bess_status_quo.yaml
+│   │   └── bess_nested.yaml
 │   │
 │   ├── integration/
 │   │   ├── pv_pandapower.yaml
 │   │   ├── ev_pandapower.yaml
 │   │   ├── hp_pandapower.yaml
 │   │   ├── bess_pandapower.yaml
-│   │   └── status_quo_combined.yaml
+│   │   ├── status_quo_combined.yaml
+│   │   ├── ev_pandapower_nested.yaml
+│   │   ├── hp_pandapower_nested.yaml
+│   │   ├── status_quo_combined_nested.yaml
+│   │   └── bess_pandapower_nested.yaml
 │   │
 │   ├── scenarios/
 │   │   ├── status_quo.yaml
-│   │   └── 2x_penetration.yaml
+│   │   ├── 2x_penetration.yaml
+│   │   └── 2x_penetration_nested.yaml
 │   │
 │   └── benchmarks/
 │       ├── base_full_year.yaml
 │       ├── status_quo_full_year.yaml
 │       ├── 2x_penetration_full_year.yaml
+│       ├── 2x_penetration_nested_full_year.yaml
+│       ├── 2x_penetration_nested_full_year_no_bess.yaml
 │       ├── status_quo_winter_week.yaml
 │       └── status_quo_winter_week_bess.yaml
 │
@@ -133,12 +143,22 @@ at-lv-scenario-benchmark/
 │   └── harmonisation_HP/
 │
 ├── scripts/
+│   ├── run_benchmark_scenario.py
+│   ├── run_benchmark_scenario_with_bess.py
+│   ├── run_benchmark_scenario_nested.py
+│   ├── run_benchmark_scenario_with_bess_nested.py
+│   ├── check_nested_scenario.py
+│   └── run_benchmark_simulation.py
 │
 ├── src/
 │   └── lv_scenario_benchmark/
 │       ├── allocation/
+│       │   └── bess_nested.py
 │       ├── data_sources/
 │       ├── integration/
+│       │   ├── ev_pandapower_nested.py
+│       │   ├── hp_pandapower_nested.py
+│       │   └── combined_nested.py
 │       ├── simulation/
 │       └── visualisation/
 │
@@ -152,6 +172,8 @@ outputs/
 ```
 
 and should normally not be committed to the repository.
+
+The repository intentionally contains **both** the standard scenario workflow and the additional nested-comparison workflow. The standard files remain available for generating self-contained reproducible scenarios. Files carrying the `_nested` suffix implement controlled comparisons between penetration levels in which the lower-penetration realisation is retained as the baseline and only the additional units required by the higher target are added.
 
 ---
 
@@ -453,6 +475,13 @@ The complete workflow consists of the following stages:
 7. Run benchmark power flow
 ```
 
+Two scenario-generation modes are provided:
+
+* **standard workflow** — generates each configured scenario as a self-contained reproducible case;
+* **nested workflow** — extends an existing lower-penetration realisation and is intended for controlled comparisons between penetration levels.
+
+The standard workflow is retained unchanged. The nested workflow is provided as an additional set of configuration, runner and integration files and does not replace the standard scenario implementation.
+
 Each stage is described below.
 
 ---
@@ -696,7 +725,7 @@ Scenario definitions are stored under:
 configs/scenarios/
 ```
 
-Two scenarios are included.
+Three scenario definitions are included: the status quo, the original standard 2× case, and an additional nested 2× case for controlled penetration comparisons.
 
 ## 10.1 Status Quo
 
@@ -742,7 +771,43 @@ penetration_factors:
 
 The factors are applied to the harmonised municipality-level status-quo stocks before AOI transfer and allocation.
 
-Additional scenarios can be created by adding another YAML file using the same structure.
+The original `2x_penetration.yaml` is intentionally retained. It represents the standard scenario workflow, in which the complete target scenario is generated reproducibly from its configuration. It does not require the higher-penetration case to inherit all EV/HP template assignments or BESS hosts from a previously generated lower-penetration case.
+
+---
+
+## 10.3 Nested 2× Penetration
+
+For a controlled comparison in which the status-quo realisation is preserved as the baseline, use:
+
+```text
+configs/scenarios/2x_penetration_nested.yaml
+```
+
+The penetration factors remain:
+
+```yaml
+case:
+  scenario_id: 2x_penetration_nested
+  realisations: 1
+
+penetration_factors:
+  pv: 2.0
+  ev: 2.0
+  hp: 2.0
+```
+
+The nested workflow differs from the standard workflow in how the realised higher-penetration case is constructed:
+
+* the same deterministic spatial draw sequence is retained across penetration levels;
+* existing status-quo PV and HP locations remain part of the higher-penetration allocation;
+* the initial EV draw sequence is retained, using `(building_id, unit_at_building)` as the stable EV unit identity;
+* EV and HP units already present in the status quo inherit their stored SimBench profile and reference-load assignments;
+* only newly added EV and HP units receive additional deterministic template assignments;
+* existing status-quo BESS hosts are retained and the higher BESS target is completed from the additional eligible PV hosts.
+
+The nested case therefore represents an **extension of the status-quo realisation**, not a second independent temporal/profile realisation.
+
+Additional standard scenarios can be created by adding another YAML file using the same structure.
 
 For example:
 
@@ -763,7 +828,7 @@ All penetration factors must be greater than zero.
 
 # 11. Step 5 — Allocate and Integrate PV, EV and HP
 
-The scenario runner performs the following sequence automatically:
+The scenario runners perform the following sequence automatically:
 
 ```text
 PV allocation
@@ -775,7 +840,11 @@ HP allocation
 combined pandapower integration
 ```
 
-## Status quo
+## 11.1 Standard Workflow
+
+The original runner remains available and is used for self-contained scenario generation.
+
+### Status quo
 
 Run:
 
@@ -783,7 +852,7 @@ Run:
 python scripts/run_benchmark_scenario.py --scenario configs/scenarios/status_quo.yaml
 ```
 
-## 2× penetration
+### Standard 2× penetration
 
 Run:
 
@@ -812,6 +881,46 @@ net_status_quo_combined.p
 net_2x_penetration_combined.p
 ```
 
+The standard workflow is deterministic for unchanged inputs and seeds. However, it should be interpreted as a self-contained scenario generation workflow rather than as a guarantee that all temporal template assignments are inherited from another penetration level.
+
+---
+
+## 11.2 Nested Workflow
+
+The nested workflow is intended for controlled comparisons in which an already generated status-quo realisation is extended to a higher penetration level.
+
+Before running the nested case, generate the corresponding status-quo realisation so that its allocation and EV/HP profile-mapping files are available.
+
+Run the nested 2× case without BESS:
+
+```bash
+python scripts/run_benchmark_scenario_nested.py --scenario configs/scenarios/2x_penetration_nested.yaml
+```
+
+The nested implementation uses the following dedicated files:
+
+```text
+configs/scenarios/2x_penetration_nested.yaml
+
+configs/integration/ev_pandapower_nested.yaml
+configs/integration/hp_pandapower_nested.yaml
+configs/integration/status_quo_combined_nested.yaml
+
+scripts/run_benchmark_scenario_nested.py
+
+src/lv_scenario_benchmark/integration/ev_pandapower_nested.py
+src/lv_scenario_benchmark/integration/hp_pandapower_nested.py
+src/lv_scenario_benchmark/integration/combined_nested.py
+```
+
+Existing status-quo EV and HP units retain their complete stored SimBench template assignments. Only additional units receive new deterministic assignments. The spatial allocation is likewise extended using the deterministic allocation sequence rather than replacing the lower-penetration realisation.
+
+For a single realisation, the resulting combined network follows the same general naming pattern, for example:
+
+```text
+net_2x_penetration_nested_combined.p
+```
+
 ---
 
 # 12. Step 6 — Add PV-Coupled BESS
@@ -834,7 +943,7 @@ Run:
 python scripts/run_benchmark_scenario_with_bess.py --scenario configs/scenarios/status_quo.yaml --bess-allocation-config configs/allocation/bess_status_quo.yaml --bess-integration-config configs/integration/bess_pandapower.yaml
 ```
 
-## 12.2 2× Penetration with BESS
+## 12.2 Standard 2× Penetration with BESS
 
 Run:
 
@@ -859,7 +968,36 @@ net_2x_penetration_combined_bess.p
 
 ---
 
-## 12.3 Reuse Existing PV/EV/HP Results
+## 12.3 Nested 2× Penetration with BESS
+
+The nested BESS workflow retains BESS locations that already exist in the status-quo realisation and selects only the additionally required storage systems from the remaining eligible PV hosts.
+
+Run:
+
+```bash
+python scripts/run_benchmark_scenario_with_bess_nested.py --scenario configs/scenarios/2x_penetration_nested.yaml --bess-allocation-config configs/allocation/bess_nested.yaml --bess-integration-config configs/integration/bess_pandapower_nested.yaml
+```
+
+The dedicated nested BESS files are:
+
+```text
+configs/allocation/bess_nested.yaml
+configs/integration/bess_pandapower_nested.yaml
+scripts/run_benchmark_scenario_with_bess_nested.py
+src/lv_scenario_benchmark/allocation/bess_nested.py
+```
+
+The resulting network is written as:
+
+```text
+net_2x_penetration_nested_combined_bess.p
+```
+
+The nested BESS workflow keeps the configured attachment-rate assumption unchanged; only the construction of the higher-penetration realisation is nested relative to the status quo.
+
+---
+
+## 12.4 Reuse Existing PV/EV/HP Results
 
 If the base scenario has already been generated, it can be reused:
 
@@ -903,7 +1041,7 @@ Charging profiles are sampled reproducibly from SimBench household charging prof
 
 The implementation uses household charging profiles from rural LV reference grids.
 
-A fixed random seed makes profile selection reproducible.
+In the standard workflow, a fixed random seed makes profile selection reproducible for a given complete allocation. In the nested workflow, EV units already present in the status-quo realisation instead inherit their stored profile and reference-load assignment; only newly added EV units receive new deterministic unit-specific assignments.
 
 ---
 
@@ -914,6 +1052,8 @@ Heat pumps are represented as additional pandapower loads.
 Profiles and corresponding electrical parameters are sampled from rural SimBench heat-pump reference loads.
 
 The configured profile set includes air-source and ground-source heat-pump profiles.
+
+In the nested workflow, HP units already present in the status-quo realisation retain their complete stored SimBench profile and active/reactive reference-load assignment. Only newly added HP units receive additional deterministic assignments.
 
 ---
 
@@ -970,15 +1110,35 @@ The current full-year status-quo benchmark uses the BESS-enhanced combined netwo
 
 ---
 
-## 14.3 2× Penetration — Full Year
+## 14.3 Standard 2× Penetration — Full Year
 
 ```bash
 python scripts/run_benchmark_simulation.py --config configs/benchmarks/2x_penetration_full_year.yaml
 ```
 
+This benchmark is retained for the original standard 2× scenario workflow.
+
 ---
 
-## 14.4 Status-Quo Winter Week
+## 14.4 Nested 2× Penetration — Full Year
+
+With BESS:
+
+```bash
+python scripts/run_benchmark_simulation.py --config configs/benchmarks/2x_penetration_nested_full_year.yaml
+```
+
+Without BESS:
+
+```bash
+python scripts/run_benchmark_simulation.py --config configs/benchmarks/2x_penetration_nested_full_year_no_bess.yaml
+```
+
+These two benchmark configurations use the same nested PV/EV/HP realisation and differ only by the inclusion of BESS.
+
+---
+
+## 14.5 Status-Quo Winter Week
 
 A shorter winter-week benchmark is also available:
 
@@ -1081,9 +1241,12 @@ Typical integrated networks include:
 ```text
 net_status_quo_combined.p
 net_status_quo_combined_bess.p
+net_2x_penetration_combined.p
+net_2x_penetration_nested_combined.p
+net_2x_penetration_nested_combined_bess.p
 ```
 
-The integration stage also produces technology-specific diagnostic and validation information.
+The integration stage also produces technology-specific diagnostic and validation information. For nested scenarios, the stored mappings are additionally used to verify that inherited status-quo units retain their spatial and EV/HP template assignments.
 
 ---
 
@@ -1120,6 +1283,28 @@ Repeated runs with unchanged:
 * software environment;
 
 therefore produce reproducible results.
+
+### Nested cross-scenario reproducibility
+
+The standard and nested workflows address different reproducibility questions.
+
+The standard workflow reproduces a complete scenario from unchanged inputs, configuration and seeds. The nested workflow additionally preserves the identity of units that are common to two penetration levels. This is useful when the purpose is to compare the effect of changing technology quantity while avoiding an unnecessary replacement of the lower-penetration realisation.
+
+For the nested workflow:
+
+* the spatial seed does not depend on the scenario identifier;
+* higher PV and HP targets extend the deterministic candidate ordering;
+* higher EV targets extend the deterministic draw sequence;
+* inherited EV and HP units retain their stored SimBench assignments;
+* inherited BESS hosts are retained and only additional hosts are selected.
+
+The included verification script checks the inheritance between the status-quo and nested case:
+
+```bash
+python scripts/check_nested_scenario.py
+```
+
+The checker reports the number of inherited EV and HP units, inherited-template mismatches, inherited BESS locations and annual EV/HP energy summaries.
 
 ### Explicit scenario configuration
 
@@ -1236,6 +1421,10 @@ configs/benchmarks/
 ```
 
 to define the simulation period and scenario network.
+
+This is the recommended route for a normal self-contained scenario.
+
+If a new scenario is intended to form a **nested penetration comparison** against an existing baseline realisation, use the nested runner and configurations instead. In that case, the baseline allocation and stored EV/HP profile mappings are explicit inputs to the comparison, and the higher-penetration case should extend rather than replace the baseline realisation.
 
 ---
 
@@ -1428,19 +1617,49 @@ python scripts/run_benchmark_simulation.py --config configs/benchmarks/base_full
 python scripts/run_benchmark_simulation.py --config configs/benchmarks/status_quo_full_year.yaml
 ```
 
-## Generate 2× penetration scenario including BESS
+## Generate standard 2× penetration scenario including BESS
+
+The original 2× workflow remains available:
 
 ```bash
 python scripts/run_benchmark_scenario_with_bess.py --scenario configs/scenarios/2x_penetration.yaml --bess-allocation-config configs/allocation/bess_status_quo.yaml --bess-integration-config configs/integration/bess_pandapower.yaml
 ```
 
-## Run 2× full-year benchmark
+## Run standard 2× full-year benchmark
 
 ```bash
 python scripts/run_benchmark_simulation.py --config configs/benchmarks/2x_penetration_full_year.yaml
 ```
 
-This produces the complete sequence:
+## Generate nested 2× penetration scenario including BESS
+
+For the controlled nested comparison used to extend the status-quo realisation:
+
+```bash
+python scripts/run_benchmark_scenario_with_bess_nested.py --scenario configs/scenarios/2x_penetration_nested.yaml --bess-allocation-config configs/allocation/bess_nested.yaml --bess-integration-config configs/integration/bess_pandapower_nested.yaml
+```
+
+Verify the inheritance:
+
+```bash
+python scripts/check_nested_scenario.py
+```
+
+## Run nested 2× full-year benchmarks
+
+With BESS:
+
+```bash
+python scripts/run_benchmark_simulation.py --config configs/benchmarks/2x_penetration_nested_full_year.yaml
+```
+
+Without BESS:
+
+```bash
+python scripts/run_benchmark_simulation.py --config configs/benchmarks/2x_penetration_nested_full_year_no_bess.yaml
+```
+
+The release therefore supports both paths:
 
 ```text
 Base Grid
@@ -1454,12 +1673,16 @@ Base Grid
    │       └── BESS
    │            └──► Status-quo full-year benchmark
    │
-   └──► 2× penetration
-           ├── PV
-           ├── EV
-           ├── HP
-           └── BESS
-                └──► 2× full-year benchmark
+   ├──► Standard 2× penetration
+   │       ├── self-contained reproducible scenario generation
+   │       └──► standard 2× full-year benchmark
+   │
+   └──► Nested 2× penetration
+           ├── retain status-quo spatial baseline
+           ├── inherit existing EV / HP template assignments
+           ├── retain existing BESS hosts
+           ├── add only the units required by the higher target
+           └──► nested 2× full-year benchmark
 ```
 
 ---
