@@ -1007,21 +1007,7 @@ Nach jedem vollständigen Lauf sind mindestens folgende Prüfungen erforderlich:
 
 ---
 
-## 12. Formulierung für die Masterarbeit
-
-### Ausführliche Fassung
-
-> For the PV harmonisation, the scope was restricted to installations that can plausibly be associated with the Austrian low-voltage level. According to § 97(1) of the Austrian Electricity Industry Act (Elektrizitätswirtschaftsgesetz, ElWG), grid connection points are generally assigned based on the grid-effective power (netzwirksame Leistung), with installations up to and including 100 kW assigned to grid level 7. Grid level 7 is defined in § 106(1) as low voltage of 1 kV and below. The E-Control plant register used in this work, however, reports the bottleneck capacity (Engpassleistung) rather than the contractually agreed grid-effective power. According to § 6 ElWG, these are distinct quantities: bottleneck capacity describes the maximum continuous active power of the generation plant, whereas grid-effective power describes the maximum power agreed at the grid connection point while considering the overall arrangement and operating concept of the connected installation.
->
-> Since the actual grid-effective power and the physical voltage level of each registered PV installation are not available, bottleneck capacity is used as a conservative proxy. PV register entries with a valid positive bottleneck capacity of up to and including 100 kW are retained for the low-voltage-oriented dataset, whereas entries above 100 kW are excluded. Records with missing or non-positive capacity are retained only for auditing and are not included in the final municipality aggregation. This rule does not imply that the actual connection level of every retained or excluded installation is known. In particular, installations with a bottleneck capacity above 100 kW may have a grid-effective power limited to 100 kW or less, and § 97(3) ElWG allows deviations from the standard grid-level assignment for technical reasons or by mutual agreement. The applied threshold therefore represents a transparent scope approximation necessitated by the available open data rather than an exact reconstruction of individual network connections.
-
-### Kurze Fassung
-
-> To restrict the PV dataset to installations relevant to the low-voltage scope, a maximum bottleneck capacity of 100 kW is applied. The threshold is derived from § 97(1) ElWG, which generally assigns installations with a grid-effective power of up to 100 kW to grid level 7; § 106 ElWG defines grid level 7 as low voltage (≤1 kV). Since the E-Control register reports bottleneck capacity instead of grid-effective power, the 100 kW threshold is used as a conservative proxy rather than as an exact identification of the physical connection level. Installations above this threshold and records with invalid capacity information are excluded from the final LV-oriented municipality aggregation but retained in separate audit outputs.
-
----
-
-## 13. Quellen
+## 12. Quellen
 
 ### Gesetzliche Hauptquelle
 
